@@ -1,0 +1,88 @@
+/*
+EnScript written by Christian Wagner, 2016.
+
+EnScript exports all files in their original structure
+to a location and puts all file in a separate folder
+that have a too long file path.
+*/
+
+class MainClass {
+    void Main(CaseClass c) {
+
+        String baseOutputPath = "C:\\Temp\\";
+        uint unsuccessful;
+        uint successful;
+        uint pathproblems;
+
+        SystemClass::ClearConsole();
+
+        forall (EntryClass entry in c.EntryRoot()){
+            if (!entry.IsFolder())
+            {                
+                Console.WriteLine(entry.FullPath());
+                Console.WriteLine(entry.FullPath().SubString(entry.FullPath().Find("\\") + 1));
+                
+                String fullPathPart = entry.FullPath().SubString(entry.FullPath().Find("\\") + 1);
+                
+                Console.WriteLine(fullPathPart.SubString(fullPathPart.Find("\\") + 1));
+
+                String path = fullPathPart.SubString(fullPathPart.Find("\\") + 1);
+
+                String exportFilePath = baseOutputPath + path;
+                
+                Console.WriteLine(exportFilePath);
+                                
+                Console.WriteLine("File Path Length: " + exportFilePath.GetLength());
+
+                if (exportFilePath.GetLength() > 250){
+                  
+                  if (pathproblems == 0) {
+                     ConnectionClass conn = LocalMachine;
+                     conn.CreateFolder(baseOutputPath + "PathProblems\\");
+                  }
+                  
+                  pathproblems++;
+                  
+                  exportFilePath = baseOutputPath + "PathProblems\\" + path.GetFilename() + "_" + entry.HashValue();
+                  
+                  Console.WriteLine(exportFilePath);
+                
+                } else {
+                    ConnectionClass conn = LocalMachine;
+                    conn.CreateFolder(exportFilePath.GetFilePath());
+                }
+
+                EntryFileClass ef();
+
+                if (ef.Open(entry)) {
+
+                    LocalFileClass lf();
+
+                    if (lf.Open(exportFilePath, FileClass::WRITE)) {
+                        lf.WriteBuffer(ef);
+                        lf.SetTimeStamps(entry.Created(), entry.Accessed(), entry.Written());
+
+                        Console.WriteLine("File Created: " + exportFilePath);
+
+                        successful++;
+                        lf.Close();
+                    } else{
+                        Console.WriteLine("Could Not Write File: " + exportFilePath);
+                        unsuccessful++;
+                    }
+
+                    ef.Close();
+                }
+                else {
+                    Console.WriteLine("Could Not Open File: " + exportFilePath);
+                    unsuccessful++;
+                }
+            }
+            
+            Console.WriteLine();
+        }
+        
+        Console.WriteLine("File Statistics: " + unsuccessful + " unsuccessful");
+        Console.WriteLine("File Statistics: " + successful + " successful");
+    }
+}
